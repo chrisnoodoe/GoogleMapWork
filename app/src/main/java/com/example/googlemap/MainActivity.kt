@@ -53,6 +53,15 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
     private fun readItems() {
         val inputStream = resources.openRawResource(R.raw.radar_search)
         val items = MyItemReader().read(inputStream)
-        mClusterManager?.addItems(items)
+        for (i in 0..9) {
+            val offset = i / 60.0
+            for (item in items) {
+                val position = item.position
+                val lat = position.latitude + offset
+                val lng = position.longitude + offset
+                val offsetItem = MyItem(LatLng(lat, lng))
+                mClusterManager?.addItem(offsetItem)
+            }
+        }
     }
 }
