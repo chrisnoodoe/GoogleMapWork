@@ -1,6 +1,7 @@
 package com.example.googlemap
 
 import android.os.Bundle
+import android.util.DisplayMetrics
 import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import com.example.googlemap.model.MyItem
@@ -11,6 +12,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.clustering.ClusterManager
+import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm
 import org.json.JSONException
 
 class MainActivity : FragmentActivity(), OnMapReadyCallback {
@@ -36,17 +38,22 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
 
     private fun startDemo() {
 
-        googleMap?.let { map ->
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(51.503186, -0.126446), 10f))
-            mClusterManager = ClusterManager(this, map)
-            map.setOnCameraIdleListener(mClusterManager)
+        val metrics = DisplayMetrics()
+        windowManager.defaultDisplay.getMetrics(metrics)
 
-            try {
-                readItems()
-            } catch (e: Exception) {
-                Toast.makeText(this, "Problem reading list of markers.", Toast.LENGTH_LONG).show()
-            }
+        googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(51.503186, -0.126446), 10f))
+
+        mClusterManager = ClusterManager(this, googleMap)
+        mClusterManager?.algorithm = NonHierarchicalDistanceBasedAlgorithm<MyItem>()
+
+        googleMap?.setOnCameraIdleListener(mClusterManager)
+
+        try {
+            readItems()
+        } catch (e: JSONException) {
+            Toast.makeText(this, "Problem reading list of markers.", Toast.LENGTH_LONG).show()
         }
+
     }
 
     @Throws(JSONException::class)
