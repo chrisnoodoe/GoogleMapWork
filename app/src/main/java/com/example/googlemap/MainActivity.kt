@@ -5,10 +5,9 @@ import android.os.Bundle
 import android.view.Window
 import android.view.WindowManager
 import androidx.fragment.app.FragmentActivity
-import com.aminyazdanpanah.maps.android.charts.ChartRenderer
-import com.aminyazdanpanah.maps.android.charts.DonutChartRenderer
-import com.aminyazdanpanah.maps.android.charts.PieChartRenderer
-import com.aminyazdanpanah.maps.android.charts.model.CMarker
+import com.example.googlemap.model.CMarker
+import com.example.googlemap.widget.ChartRenderer
+import com.example.googlemap.widget.DonutChartRenderer
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -71,25 +70,29 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback,
             googleMap?.animateCamera(CameraUpdateFactory.newLatLngBounds(location, 0))
         }
 
-        mClusterManager = ClusterManager(this, googleMap)
+        googleMap?.let { map ->
+            mClusterManager = ClusterManager(this, map)
 
-        chart = PieChartRenderer(applicationContext, googleMap, mClusterManager)
+            mClusterManager?.let { manager ->
+                chart = DonutChartRenderer(applicationContext, map, manager)
 
-        chart?.colors(colors)
-        chart?.names(names)
+                chart?.colors(colors)
+                chart?.names(names)
 
-        mClusterManager?.renderer = chart
+                mClusterManager?.renderer = chart
 
-        layoutInflater
-        googleMap?.setOnCameraIdleListener(mClusterManager)
-        googleMap?.setOnMarkerClickListener(mClusterManager)
-        googleMap?.setOnInfoWindowClickListener(mClusterManager)
-        mClusterManager?.setOnClusterClickListener(this)
-        mClusterManager?.setOnClusterInfoWindowClickListener(this)
-        mClusterManager?.setOnClusterItemClickListener(this)
-        mClusterManager?.setOnClusterItemInfoWindowClickListener(this)
-        addItems()
-        mClusterManager?.cluster()
+                layoutInflater
+                googleMap?.setOnCameraIdleListener(mClusterManager)
+                googleMap?.setOnMarkerClickListener(mClusterManager)
+                googleMap?.setOnInfoWindowClickListener(mClusterManager)
+                mClusterManager?.setOnClusterClickListener(this)
+                mClusterManager?.setOnClusterInfoWindowClickListener(this)
+                mClusterManager?.setOnClusterItemClickListener(this)
+                mClusterManager?.setOnClusterItemInfoWindowClickListener(this)
+                addItems()
+                mClusterManager?.cluster()
+            }
+        }
     }
 
     private fun addItems() {
@@ -97,8 +100,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback,
             val rand = r.nextInt(4)
 
             val marker = CMarker(randomPosition(), names[rand], getDrawableId(markerIcon[rand]))
-            marker.title = names[rand]
-
+            marker.mTitle = names[rand]
             mClusterManager?.addItem(marker)
         }
     }
