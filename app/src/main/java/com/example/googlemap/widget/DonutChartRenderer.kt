@@ -22,6 +22,7 @@ class DonutChartRenderer(context: Context, map: GoogleMap, clusterManager: Clust
     init {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val donutChart = inflater.inflate(R.layout.donutchart_cluster, null)
+
         mClusterIconGenerator.setContentView(donutChart)
         mClusterImageView = donutChart.findViewById(R.id.image)
     }
@@ -30,7 +31,7 @@ class DonutChartRenderer(context: Context, map: GoogleMap, clusterManager: Clust
         val backgroundColor: Drawable
         backgroundColor = ColorDrawable(Color.TRANSPARENT)
         mClusterIconGenerator.setBackground(backgroundColor)
-        val chart = DonutChart(values(cluster), COLORS)
+        val chart = DonutChart(values(cluster), colorSets)
         mClusterImageView?.setImageDrawable(chart)
         val icon = mClusterIconGenerator.makeIcon(cluster.size.toString() + "")
         markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(icon))?.anchor(.5f, .5f)

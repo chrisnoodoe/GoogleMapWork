@@ -1,6 +1,5 @@
 package com.example.googlemap
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.Window
 import android.view.WindowManager
@@ -31,9 +30,9 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback,
     private val mRandom = Random(1984)
     private val r = Random()
     private var chart: ChartRenderer? = null
-    private var names = arrayOf("Toyota", "Ford", "Honda", "Dodge")
-    private val markerIcon = arrayOf("red", "green", "blue", "yellow")
-    private val colors = intArrayOf(Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW)
+    private var names = arrayOf("Toyota", "Ford", "Honda")
+    private val markerIcon = arrayOf("red", "green", "blue")
+    private var colorSets: IntArray = intArrayOf()
     private var location = LatLngBounds(LatLng(35.607781, 51.187924), LatLng(35.778940, 51.548771))
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,6 +46,16 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback,
         setContentView(R.layout.activity_main)
 
         (map as SupportMapFragment).getMapAsync(this)
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        colorSets = intArrayOf(
+            getColor(R.color.circleBlue),
+            getColor(R.color.circlePurple),
+            getColor(R.color.circleOrange)
+        )
     }
 
     override fun onResume() {
@@ -76,7 +85,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback,
             mClusterManager?.let { manager ->
                 chart = DonutChartRenderer(applicationContext, map, manager)
 
-                chart?.colors(colors)
+                chart?.colors(colorSets)
                 chart?.names(names)
 
                 mClusterManager?.renderer = chart
@@ -97,7 +106,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback,
 
     private fun addItems() {
         for (i in 0..299) {
-            val rand = r.nextInt(4)
+            val rand = r.nextInt(3)
 
             val marker = CMarker(randomPosition(), names[rand], getDrawableId(markerIcon[rand]))
             marker.mTitle = names[rand]
