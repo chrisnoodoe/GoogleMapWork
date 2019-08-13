@@ -1,58 +1,65 @@
 package com.example.googlemap
 
 import android.os.Bundle
-import android.widget.Toast
+import android.text.TextUtils
 import androidx.fragment.app.FragmentActivity
-import com.example.googlemap.model.MyItem
-import com.example.googlemap.util.MyItemReader
-import com.google.android.gms.maps.CameraUpdateFactory
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
+import com.example.googlemap.util.processGeoJsonLayer
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.clustering.ClusterManager
-import org.json.JSONException
+import com.google.maps.android.data.geojson.GeoJsonFeature
+import com.google.maps.android.data.geojson.GeoJsonLayer
+import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : FragmentActivity(), OnMapReadyCallback {
 
-    private var googleMap: GoogleMap? = null
+    private val loadGeoJsonResult = MutableLiveData<Result<GeoJsonData>>()
 
-    private var mClusterManager: ClusterManager<MyItem>? = null
+    private val _geoJsonLayer = MediatorLiveData<GeoJsonLayer>()
+    val geoJsonLayer: LiveData<GeoJsonLayer>
+        get() = _geoJsonLayer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).getMapAsync(this)
+
+        (map as SupportMapFragment).getMapAsync(this)
     }
 
-    override fun onMapReady(googleMap: GoogleMap?) {
+    override fun onMapReady(googleMap: GoogleMap) {
 
-        googleMap?.let {
-            this.googleMap = googleMap
+        val mapPair = Pair(googleMap, R.raw.map_markers)
 
-            startDemo()
-        }
+        val layer = GeoJsonLayer(mapPair.first, mapPair.second, this)
+
+        processGeoJsonLayer(layer, this)
+        layer.isLayerOnMap
+
+        val geoJsonData = GeoJsonData(layer, buildFeatureMap(layer))
+
+        println("")
     }
 
-    private fun startDemo() {
-
-        googleMap?.let { map ->
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(51.503186, -0.126446), 10f))
-            mClusterManager = ClusterManager(this, map)
-            map.setOnCameraIdleListener(mClusterManager)
-
-            try {
-                readItems()
-            } catch (e: Exception) {
-                Toast.makeText(this, "Problem reading list of markers.", Toast.LENGTH_LONG).show()
+    private fun buildFeatureMap(layer: GeoJsonLayer): Map<String, GeoJsonFeature> {
+        val featureMap: MutableMap<String, GeoJsonFeature> = mutableMapOf()
+        layer.features.forEach {
+            val id = it.getProperty("id")
+            if (!TextUtils.isEmpty(id)) {
+                // Marker can map to multiple room IDs
+                for (part in id.split(",")) {
+                    featureMap[part] = it
+                }
             }
         }
-    }
-
-    @Throws(JSONException::class)
-    private fun readItems() {
-        val inputStream = resources.openRawResource(R.raw.radar_search)
-        val items = MyItemReader().read(inputStream)
-        mClusterManager?.addItems(items)
+        return featureMap
     }
 }
+
+/** Data loaded by this use case. */
+data class GeoJsonData(
+    val geoJsonLayer: GeoJsonLayer,
+    val featureMap: Map<String, GeoJsonFeature>
+)
