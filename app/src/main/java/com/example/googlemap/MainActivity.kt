@@ -1,65 +1,28 @@
 package com.example.googlemap
 
 import android.os.Bundle
-import android.text.TextUtils
-import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
-import androidx.lifecycle.MutableLiveData
-import com.example.googlemap.util.processGeoJsonLayer
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
-import com.google.maps.android.data.geojson.GeoJsonFeature
-import com.google.maps.android.data.geojson.GeoJsonLayer
-import kotlinx.android.synthetic.main.activity_main.*
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.FragmentTransaction
+import com.example.googlemap.ui.MapFragment
 
-class MainActivity : FragmentActivity(), OnMapReadyCallback {
-
-    private val loadGeoJsonResult = MutableLiveData<Result<GeoJsonData>>()
-
-    private val _geoJsonLayer = MediatorLiveData<GeoJsonLayer>()
-    val geoJsonLayer: LiveData<GeoJsonLayer>
-        get() = _geoJsonLayer
+class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        (map as SupportMapFragment).getMapAsync(this)
-    }
-
-    override fun onMapReady(googleMap: GoogleMap) {
-
-        val mapPair = Pair(googleMap, R.raw.map_markers)
-
-        val layer = GeoJsonLayer(mapPair.first, mapPair.second, this)
-
-        processGeoJsonLayer(layer, this)
-        layer.isLayerOnMap
-
-        val geoJsonData = GeoJsonData(layer, buildFeatureMap(layer))
-
-        println("")
-    }
-
-    private fun buildFeatureMap(layer: GeoJsonLayer): Map<String, GeoJsonFeature> {
-        val featureMap: MutableMap<String, GeoJsonFeature> = mutableMapOf()
-        layer.features.forEach {
-            val id = it.getProperty("id")
-            if (!TextUtils.isEmpty(id)) {
-                // Marker can map to multiple room IDs
-                for (part in id.split(",")) {
-                    featureMap[part] = it
-                }
-            }
+        supportFragmentManager.inTransaction {
+            this.replace(R.id.container, MapFragment.newInstance())
         }
-        return featureMap
     }
 }
 
-/** Data loaded by this use case. */
-data class GeoJsonData(
-    val geoJsonLayer: GeoJsonLayer,
-    val featureMap: Map<String, GeoJsonFeature>
-)
+/**
+ * Allows calls like
+ *
+ * `supportFragmentManager.inTransaction { add(...) }`
+ */
+inline fun FragmentManager.inTransaction(func: FragmentTransaction.() -> FragmentTransaction) {
+    beginTransaction().func().commit()
+}
