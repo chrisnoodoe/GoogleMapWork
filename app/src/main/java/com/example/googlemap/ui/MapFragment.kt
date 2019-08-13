@@ -10,7 +10,10 @@ import com.example.googlemap.databinding.FragmentMapBinding
 import com.example.googlemap.model.EventObserver
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.maps.android.ui.IconGenerator
 
 class MapFragment : Fragment() {
 
@@ -48,6 +51,15 @@ class MapFragment : Fragment() {
                     // Updates the location and zoom of the MapView
                     val cameraUpdate = CameraUpdateFactory.newLatLngZoom(LatLng(43.1, -87.9), 10f)
                     googleMap?.animateCamera(cameraUpdate)
+
+                    val iconGestureDetector = IconGenerator(this@MapFragment.context)
+
+                    val markerOptions: MarkerOptions =
+                        MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(iconGestureDetector.makeIcon("My Marker")))
+                            .position(LatLng(43.1, -87.9))
+                            .anchor(iconGestureDetector.anchorU, iconGestureDetector.anchorV)
+
+                    googleMap?.addMarker(markerOptions)
                 }
             })
         }
