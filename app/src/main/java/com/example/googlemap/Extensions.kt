@@ -22,6 +22,13 @@ import android.view.ViewGroup
 import androidx.annotation.LayoutRes
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Transformations
+
+/** Uses `Transformations.map` on a LiveData */
+fun <X, Y> LiveData<X>.map(body: (X) -> Y): LiveData<Y> {
+    return Transformations.map(this, body)
+}
 
 /**
  * Allows calls like
