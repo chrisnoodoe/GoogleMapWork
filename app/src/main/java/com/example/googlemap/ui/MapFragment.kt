@@ -11,6 +11,7 @@ import com.example.googlemap.databinding.FragmentMapBinding
 import com.example.googlemap.model.EventObserver
 import com.example.googlemap.widget.MyCustomView
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
@@ -62,6 +63,11 @@ class MapFragment : Fragment() {
                     val markerOptions: MarkerOptions =
                         MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(iconGestureDetector))
                             .position(LatLng(43.1, -87.9))
+
+//                    googleMap?.setInfoWindowAdapter {
+//                        object : GoogleMap.InfoWindowAdapter
+//
+//                    }
 
                     googleMap?.addMarker(markerOptions)
                 }
