@@ -7,8 +7,8 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
 import com.example.googlemap.databinding.FragmentMapBinding
+import com.example.googlemap.model.EventObserver
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.LatLng
 
@@ -16,7 +16,6 @@ class MapFragment : Fragment() {
 
     private lateinit var viewModel: MapViewModel
     private lateinit var mapView: MapView
-    private lateinit var map: GoogleMap
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,17 +32,25 @@ class MapFragment : Fragment() {
             mapView.onCreate(savedInstanceState)
 
             mapView.getMapAsync { map ->
-                this@MapFragment.map = map
-
                 viewModel?.onMapReady(map)
-
-                // Updates the location and zoom of the MapView
-                val cameraUpdate = CameraUpdateFactory.newLatLngZoom(LatLng(43.1, -87.9), 10f)
-                map?.animateCamera(cameraUpdate)
             }
         }
 
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        with(viewModel) {
+            mapCenterEvent.observe(this@MapFragment, EventObserver {
+                if (it) {
+                    // Updates the location and zoom of the MapView
+                    val cameraUpdate = CameraUpdateFactory.newLatLngZoom(LatLng(43.1, -87.9), 10f)
+                    googleMap?.animateCamera(cameraUpdate)
+                }
+            })
+        }
     }
 
     override fun onResume() {
