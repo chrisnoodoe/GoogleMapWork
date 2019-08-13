@@ -1,5 +1,6 @@
 package com.example.googlemap.ui
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
 import com.example.googlemap.databinding.FragmentMapBinding
 import com.example.googlemap.model.EventObserver
+import com.example.googlemap.widget.MyCustomView
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -52,17 +54,35 @@ class MapFragment : Fragment() {
                     val cameraUpdate = CameraUpdateFactory.newLatLngZoom(LatLng(43.1, -87.9), 10f)
                     googleMap?.animateCamera(cameraUpdate)
 
-                    val iconGestureDetector = IconGenerator(this@MapFragment.context)
+                    val iconGestureDetector = IconGenerator(this@MapFragment.context).let { generator ->
+                        generator.setContentView(setupCustomView())
+                        generator.makeIcon("My Marker")
+                    }
 
                     val markerOptions: MarkerOptions =
-                        MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(iconGestureDetector.makeIcon("My Marker")))
+                        MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(iconGestureDetector))
                             .position(LatLng(43.1, -87.9))
-                            .anchor(iconGestureDetector.anchorU, iconGestureDetector.anchorV)
 
                     googleMap?.addMarker(markerOptions)
                 }
             })
         }
+    }
+
+    private fun setupCustomView(): MyCustomView? {
+        this@MapFragment.context?.let { view ->
+            val myCustomView = MyCustomView(view, null, 0)
+
+            myCustomView.setTopTextContent("Top Top")
+
+            myCustomView.setBottomTextContent("Bottom Bottom")
+
+            myCustomView.setBottomTextColor(Color.BLUE)
+
+            myCustomView.setTopTextColor(Color.RED)
+
+            return myCustomView
+        } ?: return null
     }
 
     override fun onResume() {
