@@ -1,5 +1,6 @@
 package com.example.googlemap.ui
 
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -7,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
+import com.example.googlemap.R
 import com.example.googlemap.databinding.FragmentMapBinding
 import com.example.googlemap.model.EventObserver
 import com.example.googlemap.widget.MyCustomView
@@ -55,24 +57,49 @@ class MapFragment : Fragment() {
                     val cameraUpdate = CameraUpdateFactory.newLatLngZoom(LatLng(43.1, -87.9), 10f)
                     googleMap?.animateCamera(cameraUpdate)
 
-                    val iconGestureDetector = IconGenerator(this@MapFragment.context).let { generator ->
-                        generator.setContentView(setupCustomView())
-                        generator.makeIcon("My Marker")
-                    }
+                    // Setup Sample Markers
+                    generateSamples(googleMap)
 
-                    val markerOptions: MarkerOptions =
-                        MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(iconGestureDetector))
-                            .position(LatLng(43.1, -87.9))
-
-//                    googleMap?.setInfoWindowAdapter {
-//                        object : GoogleMap.InfoWindowAdapter
-//
-//                    }
-
-                    googleMap?.addMarker(markerOptions)
+                    val adapter = InfoWindowType1Adapter(this@MapFragment.requireActivity())
+                    googleMap?.setInfoWindowAdapter(adapter)
                 }
             })
         }
+    }
+
+    private fun generateSamples(googleMap: GoogleMap?) {
+        googleMap?.addMarker(generateType1Marker())
+        googleMap?.addMarker(gernerateType2Marker())
+        googleMap?.addMarker(generateType3Marker())
+        googleMap?.addMarker(generateType4Marker())
+    }
+
+    private fun generateType1Marker(): MarkerOptions {
+        val bitmap = BitmapFactory.decodeResource(context?.resources, R.drawable.noodoe)
+        val icon = BitmapDescriptorFactory.fromBitmap(bitmap)
+        return MarkerOptions().icon(icon).position(LatLng(43.1, -87.9)).title("1")
+    }
+
+    private fun generateType3Marker(): MarkerOptions {
+        val bitmap = BitmapFactory.decodeResource(context?.resources, R.drawable.unavailable)
+        val icon = BitmapDescriptorFactory.fromBitmap(bitmap)
+        return MarkerOptions().icon(icon).position(LatLng(43.1, -87.8)).title("2")
+    }
+
+    private fun generateType4Marker(): MarkerOptions {
+        val bitmap = BitmapFactory.decodeResource(context?.resources, R.drawable.invalid_name)
+        val icon = BitmapDescriptorFactory.fromBitmap(bitmap)
+        return MarkerOptions().icon(icon).position(LatLng(43.0, -87.8)).title("3")
+    }
+
+    private fun gernerateType2Marker(): MarkerOptions {
+        val iconGestureDetector = IconGenerator(this@MapFragment.context).let { generator ->
+            generator.setContentView(setupCustomView())
+            generator.makeIcon("My Marker")
+        }
+
+        return MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(iconGestureDetector))
+            .position(LatLng(43.2, -87.9)).title("4")
     }
 
     private fun setupCustomView(): MyCustomView? {
