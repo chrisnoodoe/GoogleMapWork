@@ -22,9 +22,5 @@ class MapViewModel : ViewModel() {
         this.googleMap = googleMap
 
         _mapCenterEvent.postValue(Event(true))
-//        loadGeoJsonFeaturesUseCase(
-//            LoadGeoJsonParams(googleMap, R.raw.map_markers),
-//            loadGeoJsonResult
-//        )
     }
 }

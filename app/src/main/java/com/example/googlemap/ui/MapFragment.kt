@@ -1,5 +1,7 @@
 package com.example.googlemap.ui
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
@@ -12,18 +14,36 @@ import com.example.googlemap.R
 import com.example.googlemap.databinding.FragmentMapBinding
 import com.example.googlemap.model.EventObserver
 import com.example.googlemap.widget.MyCustomView
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.ui.IconGenerator
+import pub.devrel.easypermissions.AfterPermissionGranted
+import pub.devrel.easypermissions.EasyPermissions
+
+private const val LOCATION_PERMISSION_REQUEST_CODE = 1
+private const val REQUEST_PERMISSIONS_REQUEST_CODE = 34
 
 class MapFragment : Fragment() {
 
     private lateinit var viewModel: MapViewModel
     private lateinit var mapView: MapView
+    /**
+     * Provides the entry point to the Fused Location Provider API.
+     */
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,23 +67,63 @@ class MapFragment : Fragment() {
         return binding.root
     }
 
+    @SuppressLint("MissingPermission")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         with(viewModel) {
             mapCenterEvent.observe(this@MapFragment, EventObserver {
                 if (it) {
-                    // Updates the location and zoom of the MapView
-                    val cameraUpdate = CameraUpdateFactory.newLatLngZoom(LatLng(43.1, -87.9), 10f)
-                    googleMap?.animateCamera(cameraUpdate)
-
-                    // Setup Sample Markers
-                    generateSamples(googleMap)
-
-                    val adapter = InfoWindowType1Adapter(this@MapFragment.requireActivity())
-                    googleMap?.setInfoWindowAdapter(adapter)
+                    enableMyLocation(googleMap)
                 }
             })
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
+    }
+
+    @SuppressLint("MissingPermission")
+    @AfterPermissionGranted(LOCATION_PERMISSION_REQUEST_CODE)
+    private fun enableMyLocation(googleMap: GoogleMap?) {
+        // Enable the location layer. Request the location permission if needed.
+        val permissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+
+        context?.let { context ->
+            if (EasyPermissions.hasPermissions(context, *permissions)) {
+                googleMap?.isMyLocationEnabled = true
+
+                googleMap?.uiSettings?.isMyLocationButtonEnabled = false
+
+                fusedLocationClient.lastLocation.addOnCompleteListener(requireActivity()) { task ->
+                    if (task.isSuccessful && task.result != null) {
+                        val myCurrentLocation = LatLng(task.result?.latitude!!, task.result?.longitude!!)
+
+                        val builder = CameraPosition.Builder()
+                        builder.zoom(15f)
+                        builder.target(myCurrentLocation)
+
+                        googleMap?.animateCamera(CameraUpdateFactory.newCameraPosition(builder.build()))
+
+//                        googleMap?.addMarker(generateMarker(myCurrentLocation))
+
+                        // Updates the location and zoom of the MapView
+//                        val cameraUpdate = CameraUpdateFactory.newLatLngZoom(myCurrentLocation, 16f)
+//                        googleMap?.animateCamera(cameraUpdate)
+                    }
+                }
+            } else {
+                // if permissions are not currently granted, request permissions
+                EasyPermissions.requestPermissions(
+                    this,
+                    getString(R.string.permission_rationale_location),
+                    LOCATION_PERMISSION_REQUEST_CODE,
+                    *permissions
+                )
+            }
         }
     }
 
@@ -72,6 +132,12 @@ class MapFragment : Fragment() {
         googleMap?.addMarker(gernerateType2Marker())
         googleMap?.addMarker(generateType3Marker())
         googleMap?.addMarker(generateType4Marker())
+    }
+
+    private fun generateMarker(location: LatLng): MarkerOptions {
+        val bitmap = BitmapFactory.decodeResource(context?.resources, R.drawable.noodoe)
+        val icon = BitmapDescriptorFactory.fromBitmap(bitmap)
+        return MarkerOptions().icon(icon).position(location).title("1")
     }
 
     private fun generateType1Marker(): MarkerOptions {

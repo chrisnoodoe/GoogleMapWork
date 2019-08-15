@@ -40,14 +40,16 @@ dependencies {
     // UI
     implementation 'androidx.appcompat:appcompat:1.1.0-rc01'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
 
     // Utils
     implementation 'androidx.core:core-ktx:1.0.2'
 
     // Maps
-    api("com.google.maps.android:android-maps-utils:0.5") {
-        exclude group: "com.google.android.gms"
-    }
-    api "com.google.android.gms:play-services-maps:17.0.0"
-    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+    implementation "com.google.android.gms:play-services-location:17.0.0"
+    implementation "com.google.android.gms:play-services-maps:17.0.0"
+    implementation "com.google.maps.android:android-maps-utils:0.5"
+
+    // For developers using AndroidX in their applications
+    implementation 'pub.devrel:easypermissions:3.0.0'
 }
