@@ -2,7 +2,10 @@ package com.example.googlemap.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.graphics.Color
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -17,15 +20,16 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
 
 private const val LOCATION_PERMISSION_REQUEST_CODE = 1
 
-class MapFragment : Fragment(), GoogleMap.OnCameraIdleListener, GoogleMap.OnCameraMoveStartedListener,
-    GoogleMap.OnCameraMoveListener, GoogleMap.OnCameraMoveCanceledListener {
+class MapFragment : Fragment() {
 
     private lateinit var viewModel: MapViewModel
     private lateinit var mapView: MapView
@@ -55,11 +59,6 @@ class MapFragment : Fragment(), GoogleMap.OnCameraIdleListener, GoogleMap.OnCame
             mapView.onCreate(savedInstanceState)
 
             mapView.getMapAsync { map ->
-                map.setOnCameraIdleListener(this@MapFragment)
-                map.setOnCameraMoveCanceledListener(this@MapFragment)
-                map.setOnCameraMoveCanceledListener(this@MapFragment)
-                map.setOnCameraMoveListener(this@MapFragment)
-
                 viewModel?.onMapReady(map)
             }
         }
@@ -86,28 +85,19 @@ class MapFragment : Fragment(), GoogleMap.OnCameraIdleListener, GoogleMap.OnCame
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
     }
 
-    override fun onCameraMoveStarted(p0: Int) {
-        val zoomLevel = viewModel.googleMap?.cameraPosition?.zoom
+    private fun drawableToBitmap(drawable: Drawable): Bitmap {
+        if (drawable is BitmapDrawable) {
+            return drawable.bitmap
+        }
 
-        println("")
-    }
+        val bitmap: Bitmap =
+            Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
 
-    override fun onCameraMove() {
-        val zoomLevel = viewModel.googleMap?.cameraPosition?.zoom
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
 
-        println("")
-    }
-
-    override fun onCameraMoveCanceled() {
-        val zoomLevel = viewModel.googleMap?.cameraPosition?.zoom
-
-        println("")
-    }
-
-    override fun onCameraIdle() {
-        val zoomLevel = viewModel.googleMap?.cameraPosition?.zoom
-
-        println("")
+        return bitmap
     }
 
     @SuppressLint("MissingPermission")
@@ -125,8 +115,6 @@ class MapFragment : Fragment(), GoogleMap.OnCameraIdleListener, GoogleMap.OnCame
                 fusedLocationClient.lastLocation.addOnCompleteListener(requireActivity()) { task ->
                     if (task.isSuccessful && task.result != null) {
                         val myCurrentLocation = LatLng(task.result?.latitude!!, task.result?.longitude!!)
-
-                        val zoomLevel = googleMap?.cameraPosition?.zoom
 
                         generateMyLocationMarker(googleMap, myCurrentLocation)
 
@@ -148,22 +136,24 @@ class MapFragment : Fragment(), GoogleMap.OnCameraIdleListener, GoogleMap.OnCame
     }
 
     private fun generateMyLocationMarker(googleMap: GoogleMap?, location: LatLng) {
-        val outterCircleOptions: CircleOptions = CircleOptions().apply {
+        val circleOptions: CircleOptions = CircleOptions().apply {
             center(location)
-            radius(20.0)
+            radius(15.0)
             fillColor(0x32ff6600)
             strokeWidth(0f)
         }
-        googleMap?.addCircle(outterCircleOptions)
+        googleMap?.addCircle(circleOptions)
 
-        val innerCircleOptions: CircleOptions = CircleOptions().apply {
-            center(location)
-            radius(8.0)
-            fillColor(Color.parseColor("#ff6600"))
-            strokeColor(Color.WHITE)
-            strokeWidth(3f)
+        val drawable = resources.getDrawable(R.drawable.shape_ring, null)
+        val icon = BitmapDescriptorFactory.fromBitmap(drawableToBitmap(drawable))
+
+        val markerOptions: MarkerOptions = MarkerOptions().apply {
+            icon(icon)
+            position(location)
+            anchor(0.5f, 0.5f)
         }
-        googleMap?.addCircle(innerCircleOptions)
+
+        googleMap?.addMarker(markerOptions)
     }
 
     override fun onResume() {
