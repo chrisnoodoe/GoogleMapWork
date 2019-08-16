@@ -1,6 +1,7 @@
 package com.example.googlemap.ui
 
-import android.graphics.BitmapFactory
+import android.Manifest
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,19 +12,33 @@ import androidx.lifecycle.ViewModelProviders
 import com.example.googlemap.R
 import com.example.googlemap.databinding.FragmentMapBinding
 import com.example.googlemap.model.EventObserver
-import com.example.googlemap.widget.MyCustomView
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.maps.android.ui.IconGenerator
+import pub.devrel.easypermissions.AfterPermissionGranted
+import pub.devrel.easypermissions.EasyPermissions
 
-class MapFragment : Fragment() {
+private const val LOCATION_PERMISSION_REQUEST_CODE = 1
+
+class MapFragment : Fragment(), GoogleMap.OnCameraIdleListener, GoogleMap.OnCameraMoveStartedListener,
+    GoogleMap.OnCameraMoveListener, GoogleMap.OnCameraMoveCanceledListener {
 
     private lateinit var viewModel: MapViewModel
     private lateinit var mapView: MapView
+    /**
+     * Provides the entry point to the Fused Location Provider API.
+     */
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -40,6 +55,11 @@ class MapFragment : Fragment() {
             mapView.onCreate(savedInstanceState)
 
             mapView.getMapAsync { map ->
+                map.setOnCameraIdleListener(this@MapFragment)
+                map.setOnCameraMoveCanceledListener(this@MapFragment)
+                map.setOnCameraMoveCanceledListener(this@MapFragment)
+                map.setOnCameraMoveListener(this@MapFragment)
+
                 viewModel?.onMapReady(map)
             }
         }
@@ -47,75 +67,103 @@ class MapFragment : Fragment() {
         return binding.root
     }
 
+    @SuppressLint("MissingPermission")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         with(viewModel) {
             mapCenterEvent.observe(this@MapFragment, EventObserver {
                 if (it) {
-                    // Updates the location and zoom of the MapView
-                    val cameraUpdate = CameraUpdateFactory.newLatLngZoom(LatLng(43.1, -87.9), 10f)
-                    googleMap?.animateCamera(cameraUpdate)
-
-                    // Setup Sample Markers
-                    generateSamples(googleMap)
-
-                    val adapter = InfoWindowType1Adapter(this@MapFragment.requireActivity())
-                    googleMap?.setInfoWindowAdapter(adapter)
+                    enableMyLocation(googleMap)
                 }
             })
         }
     }
 
-    private fun generateSamples(googleMap: GoogleMap?) {
-        googleMap?.addMarker(generateType1Marker())
-        googleMap?.addMarker(gernerateType2Marker())
-        googleMap?.addMarker(generateType3Marker())
-        googleMap?.addMarker(generateType4Marker())
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
     }
 
-    private fun generateType1Marker(): MarkerOptions {
-        val bitmap = BitmapFactory.decodeResource(context?.resources, R.drawable.noodoe)
-        val icon = BitmapDescriptorFactory.fromBitmap(bitmap)
-        return MarkerOptions().icon(icon).position(LatLng(43.1, -87.9)).title("1")
+    override fun onCameraMoveStarted(p0: Int) {
+        val zoomLevel = viewModel.googleMap?.cameraPosition?.zoom
+
+        println("")
     }
 
-    private fun generateType3Marker(): MarkerOptions {
-        val bitmap = BitmapFactory.decodeResource(context?.resources, R.drawable.unavailable)
-        val icon = BitmapDescriptorFactory.fromBitmap(bitmap)
-        return MarkerOptions().icon(icon).position(LatLng(43.1, -87.8)).title("2")
+    override fun onCameraMove() {
+        val zoomLevel = viewModel.googleMap?.cameraPosition?.zoom
+
+        println("")
     }
 
-    private fun generateType4Marker(): MarkerOptions {
-        val bitmap = BitmapFactory.decodeResource(context?.resources, R.drawable.invalid_name)
-        val icon = BitmapDescriptorFactory.fromBitmap(bitmap)
-        return MarkerOptions().icon(icon).position(LatLng(43.0, -87.8)).title("3")
+    override fun onCameraMoveCanceled() {
+        val zoomLevel = viewModel.googleMap?.cameraPosition?.zoom
+
+        println("")
     }
 
-    private fun gernerateType2Marker(): MarkerOptions {
-        val iconGestureDetector = IconGenerator(this@MapFragment.context).let { generator ->
-            generator.setContentView(setupCustomView())
-            generator.makeIcon("My Marker")
+    override fun onCameraIdle() {
+        val zoomLevel = viewModel.googleMap?.cameraPosition?.zoom
+
+        println("")
+    }
+
+    @SuppressLint("MissingPermission")
+    @AfterPermissionGranted(LOCATION_PERMISSION_REQUEST_CODE)
+    private fun enableMyLocation(googleMap: GoogleMap?) {
+        // Enable the location layer. Request the location permission if needed.
+        val permissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+
+        context?.let { context ->
+            if (EasyPermissions.hasPermissions(context, *permissions)) {
+                googleMap?.isMyLocationEnabled = false
+
+                googleMap?.uiSettings?.isMyLocationButtonEnabled = false
+
+                fusedLocationClient.lastLocation.addOnCompleteListener(requireActivity()) { task ->
+                    if (task.isSuccessful && task.result != null) {
+                        val myCurrentLocation = LatLng(task.result?.latitude!!, task.result?.longitude!!)
+
+                        val zoomLevel = googleMap?.cameraPosition?.zoom
+
+                        generateMyLocationMarker(googleMap, myCurrentLocation)
+
+                        // Updates the location and zoom of the MapView
+                        val cameraUpdate = CameraUpdateFactory.newLatLngZoom(myCurrentLocation, 16f)
+                        googleMap?.animateCamera(cameraUpdate)
+                    }
+                }
+            } else {
+                // if permissions are not currently granted, request permissions
+                EasyPermissions.requestPermissions(
+                    this,
+                    getString(R.string.permission_rationale_location),
+                    LOCATION_PERMISSION_REQUEST_CODE,
+                    *permissions
+                )
+            }
         }
-
-        return MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(iconGestureDetector))
-            .position(LatLng(43.2, -87.9)).title("4")
     }
 
-    private fun setupCustomView(): MyCustomView? {
-        this@MapFragment.context?.let { view ->
-            val myCustomView = MyCustomView(view, null, 0)
+    private fun generateMyLocationMarker(googleMap: GoogleMap?, location: LatLng) {
+        val outterCircleOptions: CircleOptions = CircleOptions().apply {
+            center(location)
+            radius(20.0)
+            fillColor(0x32ff6600)
+            strokeWidth(0f)
+        }
+        googleMap?.addCircle(outterCircleOptions)
 
-            myCustomView.setTopTextContent("Top Top")
-
-            myCustomView.setBottomTextContent("Bottom Bottom")
-
-            myCustomView.setBottomTextColor(Color.BLUE)
-
-            myCustomView.setTopTextColor(Color.RED)
-
-            return myCustomView
-        } ?: return null
+        val innerCircleOptions: CircleOptions = CircleOptions().apply {
+            center(location)
+            radius(8.0)
+            fillColor(Color.parseColor("#ff6600"))
+            strokeColor(Color.WHITE)
+            strokeWidth(3f)
+        }
+        googleMap?.addCircle(innerCircleOptions)
     }
 
     override fun onResume() {
