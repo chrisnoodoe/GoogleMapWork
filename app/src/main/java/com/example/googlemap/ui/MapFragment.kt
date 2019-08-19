@@ -72,6 +72,7 @@ class MapFragment : Fragment() {
         googleMap?.addMarker(gernerateType2Marker())
         googleMap?.addMarker(generateType3Marker())
         googleMap?.addMarker(generateType4Marker())
+        googleMap?.addMarker(generateType5Marker())
     }
 
     private fun generateType1Marker(): MarkerOptions {
@@ -90,6 +91,12 @@ class MapFragment : Fragment() {
         val bitmap = BitmapFactory.decodeResource(context?.resources, R.drawable.invalid_name)
         val icon = BitmapDescriptorFactory.fromBitmap(bitmap)
         return MarkerOptions().icon(icon).position(LatLng(43.0, -87.8)).title("3")
+    }
+
+    private fun generateType5Marker(): MarkerOptions {
+        val bitmap = BitmapFactory.decodeResource(context?.resources, R.drawable.invalid_name)
+        val icon = BitmapDescriptorFactory.fromBitmap(bitmap)
+        return MarkerOptions().icon(icon).position(LatLng(42.9, -87.8)).title("5")
     }
 
     private fun gernerateType2Marker(): MarkerOptions {

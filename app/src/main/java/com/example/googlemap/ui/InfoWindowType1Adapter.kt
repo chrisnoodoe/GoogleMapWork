@@ -55,6 +55,15 @@ class InfoWindowType1Adapter(context: Context) : GoogleMap.InfoWindowAdapter {
 
                 return view
             }
+            "5" -> {
+                val view = (context as Activity).layoutInflater.inflate(R.layout.view_info_window_type5, null)
+                val tvTitle = view.findViewById<TextView>(R.id.tv_title)
+                val tvStatus = view.findViewById<TextView>(R.id.tv_status)
+//                tvTitle.text = "J-1774"
+//                tvStatus.text = "4 Available"
+
+                return view
+            }
         }
 
         return null
