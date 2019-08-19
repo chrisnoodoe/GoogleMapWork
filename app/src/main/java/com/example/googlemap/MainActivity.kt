@@ -5,7 +5,6 @@ import android.view.Window
 import android.view.WindowManager
 import androidx.fragment.app.FragmentActivity
 import com.example.googlemap.model.CMarker
-import com.example.googlemap.widget.ChartRenderer
 import com.example.googlemap.widget.DonutChartRenderer
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -29,7 +28,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback,
 
     private val mRandom = Random(1984)
     private val r = Random()
-    private var chart: ChartRenderer? = null
+    private var chart: DonutChartRenderer? = null
     private var names = arrayOf("Toyota", "Ford", "Honda")
     private val markerIcon = arrayOf("red", "green", "blue")
     private var colorSets: IntArray = intArrayOf()
