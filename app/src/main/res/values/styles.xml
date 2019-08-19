@@ -17,4 +17,7 @@
         <item name="android:shadowRadius">3</item>
     </style>
 
+    <style name="AppBaseTheme" parent="Theme.AppCompat.Light">
+    </style>
+
 </resources>

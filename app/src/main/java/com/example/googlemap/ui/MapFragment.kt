@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModelProviders
 import com.example.googlemap.R
 import com.example.googlemap.databinding.FragmentMapBinding
 import com.example.googlemap.model.EventObserver
+import com.example.googlemap.widget.DonutChart
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -37,6 +38,8 @@ class MapFragment : Fragment() {
      * Provides the entry point to the Fused Location Provider API.
      */
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    private lateinit var donutChart: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -116,7 +119,8 @@ class MapFragment : Fragment() {
                     if (task.isSuccessful && task.result != null) {
                         val myCurrentLocation = LatLng(task.result?.latitude!!, task.result?.longitude!!)
 
-                        generateMyLocationMarker(googleMap, myCurrentLocation)
+//                        generateMyLocationMarker(googleMap, myCurrentLocation)
+                        genMarker(googleMap, myCurrentLocation)
 
                         // Updates the location and zoom of the MapView
                         val cameraUpdate = CameraUpdateFactory.newLatLngZoom(myCurrentLocation, 16f)
@@ -133,6 +137,27 @@ class MapFragment : Fragment() {
                 )
             }
         }
+    }
+
+    private fun genMarker(googleMap: GoogleMap?, location: LatLng) {
+
+        val bitmap = Bitmap.createBitmap(50, 50, Bitmap.Config.ARGB_8888)
+
+        val canvas = Canvas(bitmap)
+
+        donutChart.layout(donutChart.left, donutChart.top, donutChart.right, donutChart.bottom)
+        donutChart.draw(canvas)
+
+        val icon = BitmapDescriptorFactory.fromBitmap(bitmap)
+
+
+        val markerOptions: MarkerOptions = MarkerOptions().apply {
+            icon(icon)
+            position(location)
+            anchor(0.5f, 0.5f)
+        }
+
+        googleMap?.addMarker(markerOptions)
     }
 
     private fun generateMyLocationMarker(googleMap: GoogleMap?, location: LatLng) {
