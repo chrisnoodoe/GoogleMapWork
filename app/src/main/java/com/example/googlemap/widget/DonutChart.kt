@@ -11,7 +11,7 @@ import kotlin.math.sin
 class DonutChart(values: FloatArray, colors: IntArray) : Drawable() {
 
     private val radius = 120f
-    private var paint: Paint
+
     private val myPath: Path
     private val outterCircle: RectF
     private val innerCircle: RectF
@@ -24,20 +24,7 @@ class DonutChart(values: FloatArray, colors: IntArray) : Drawable() {
     init {
         valueDegree = calculateData(values)
 
-        paint = Paint()
-        paint.isDither = true
-        paint.style = Paint.Style.FILL
-        paint.strokeJoin = Paint.Join.ROUND
-        paint.strokeCap = Paint.Cap.ROUND
-        paint.isAntiAlias = true
-        paint.strokeWidth = radius / 14.0f
-
-        val shadowPaint = Paint()
-        shadowPaint.color = -0x10000000
-        shadowPaint.style = Paint.Style.STROKE
-        shadowPaint.isAntiAlias = true
-        shadowPaint.strokeWidth = 6.0f
-        shadowPaint.maskFilter = BlurMaskFilter(4f, BlurMaskFilter.Blur.SOLID)
+        val shadowPaint = genShadowPaint()
 
         myPath = Path()
 
@@ -55,6 +42,17 @@ class DonutChart(values: FloatArray, colors: IntArray) : Drawable() {
         innerCircle.set(adjust, adjust, radius * 2 - adjust, radius * 2 - adjust)
     }
 
+    private fun genShadowPaint(): Paint {
+        val shadowPaint = Paint()
+        shadowPaint.color = -0x10000000
+        shadowPaint.style = Paint.Style.STROKE
+        shadowPaint.isAntiAlias = true
+        shadowPaint.strokeWidth = 6.0f
+        shadowPaint.maskFilter = BlurMaskFilter(4f, BlurMaskFilter.Blur.SOLID)
+
+        return shadowPaint
+    }
+
     private fun calculateData(data: FloatArray): FloatArray {
         var total = 0f
         for (aData in data) {
@@ -66,6 +64,18 @@ class DonutChart(values: FloatArray, colors: IntArray) : Drawable() {
         return data
     }
 
+    private fun genPaint(): Paint {
+        val paint = Paint()
+        paint.isDither = true
+        paint.style = Paint.Style.FILL
+        paint.strokeJoin = Paint.Join.ROUND
+        paint.strokeCap = Paint.Cap.ROUND
+        paint.isAntiAlias = true
+        paint.strokeWidth = radius / 14.0f
+
+        return paint
+    }
+
     private fun drawDonut(canvas: Canvas, paint: Paint, start: Float, sweep: Float) {
 
         myPath.reset()
@@ -75,7 +85,7 @@ class DonutChart(values: FloatArray, colors: IntArray) : Drawable() {
         canvas.drawPath(myPath, paint)
     }
 
-    private fun setGradient(sColor: Int, eColor: Int) {
+    private fun setGradient(paint: Paint, sColor: Int, eColor: Int) {
         paint.shader = RadialGradient(
             radius, radius, radius - 5,
             intArrayOf(sColor, eColor),
@@ -103,11 +113,14 @@ class DonutChart(values: FloatArray, colors: IntArray) : Drawable() {
     }
 
     override fun draw(canvas: Canvas) {
+        val paint: Paint = genPaint()
+
         // draw shadow
         paint.shader = null
         val adjust = .0095f * radius
         paint.setShadowLayer(8f, adjust, -adjust, -0x56000000)
         drawDonut(canvas, paint, 0f, 359.9f)
+
         var sweep: Float
 
         for (i in 0 until valueDegree.size) {
@@ -121,7 +134,7 @@ class DonutChart(values: FloatArray, colors: IntArray) : Drawable() {
                 sweep = 359f
             }
 
-            setGradient(COLORS[i], darkenColor(COLORS[i]))
+            setGradient(paint, COLORS[i], darkenColor(COLORS[i]))
             drawDonut(canvas, paint, start.toFloat(), sweep)
 
             if (valueReal[i] != 0f) {
