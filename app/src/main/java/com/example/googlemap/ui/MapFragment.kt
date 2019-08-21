@@ -1,11 +1,5 @@
 package com.example.googlemap.ui
 
-import android.Manifest
-import android.annotation.SuppressLint
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,34 +9,18 @@ import androidx.lifecycle.ViewModelProviders
 import com.example.googlemap.R
 import com.example.googlemap.databinding.FragmentMapBinding
 import com.example.googlemap.model.EventObserver
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
+import com.example.googlemap.model.Person
+import com.example.googlemap.model.PersonRenderer
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
-import pub.devrel.easypermissions.AfterPermissionGranted
-import pub.devrel.easypermissions.EasyPermissions
-
-private const val LOCATION_PERMISSION_REQUEST_CODE = 1
+import com.google.maps.android.clustering.ClusterManager
 
 class MapFragment : Fragment() {
 
     private lateinit var viewModel: MapViewModel
     private lateinit var mapView: MapView
-    /**
-     * Provides the entry point to the Fused Location Provider API.
-     */
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
-    }
+    private lateinit var clusterManager: ClusterManager<Person>
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -66,94 +44,64 @@ class MapFragment : Fragment() {
         return binding.root
     }
 
-    @SuppressLint("MissingPermission")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         with(viewModel) {
             mapCenterEvent.observe(this@MapFragment, EventObserver {
                 if (it) {
-                    enableMyLocation(googleMap)
+                    googleMap?.let { map ->
+                        map.moveCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                LatLng(
+                                    51.503186,
+                                    -0.126446
+                                ), 9.5f
+                            )
+                        )
+                        clusterManager = ClusterManager(this@MapFragment.context, map)
+                        clusterManager.renderer =
+                            PersonRenderer(this@MapFragment.context!!, map, clusterManager)
+
+                        map.setOnCameraIdleListener(clusterManager)
+                        map.setOnMarkerClickListener(clusterManager)
+                        map.setOnInfoWindowClickListener(clusterManager)
+
+                        addItems()
+                        clusterManager.cluster()
+                    }
                 }
             })
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    private fun addItems() {
+        // http://www.flickr.com/photos/sdasmarchives/5036248203/
+        clusterManager.addItem(Person("Walter", R.drawable.walter, viewModel.position()))
 
-        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
-    }
+        // http://www.flickr.com/photos/usnationalarchives/4726917149/
+        clusterManager.addItem(Person("Gran", R.drawable.gran, viewModel.position()))
 
-    private fun drawableToBitmap(drawable: Drawable): Bitmap {
-        if (drawable is BitmapDrawable) {
-            return drawable.bitmap
-        }
+        // http://www.flickr.com/photos/nypl/3111525394/
+        clusterManager.addItem(Person("Ruth", R.drawable.ruth, viewModel.position()))
 
-        val bitmap: Bitmap =
-            Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
+        // http://www.flickr.com/photos/smithsonian/2887433330/
+        clusterManager.addItem(Person("Stefan", R.drawable.stefan, viewModel.position()))
 
-        drawable.setBounds(0, 0, canvas.width, canvas.height)
-        drawable.draw(canvas)
+        // http://www.flickr.com/photos/library_of_congress/2179915182/
+        clusterManager.addItem(Person("Mechanic", R.drawable.mechanic, viewModel.position()))
 
-        return bitmap
-    }
+        // http://www.flickr.com/photos/nationalmediamuseum/7893552556/
+        clusterManager.addItem(Person("Yeats", R.drawable.yeats, viewModel.position()))
 
-    @SuppressLint("MissingPermission")
-    @AfterPermissionGranted(LOCATION_PERMISSION_REQUEST_CODE)
-    private fun enableMyLocation(googleMap: GoogleMap?) {
-        // Enable the location layer. Request the location permission if needed.
-        val permissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        // http://www.flickr.com/photos/sdasmarchives/5036231225/
+        clusterManager.addItem(Person("John", R.drawable.john, viewModel.position()))
 
-        context?.let { context ->
-            if (EasyPermissions.hasPermissions(context, *permissions)) {
-                googleMap?.isMyLocationEnabled = false
+        // http://www.flickr.com/photos/anmm_thecommons/7694202096/
+        clusterManager.addItem(Person("Trevor the Turtle", R.drawable.turtle, viewModel.position()))
 
-                googleMap?.uiSettings?.isMyLocationButtonEnabled = false
-
-                fusedLocationClient.lastLocation.addOnCompleteListener(requireActivity()) { task ->
-                    if (task.isSuccessful && task.result != null) {
-                        val myCurrentLocation = LatLng(task.result?.latitude!!, task.result?.longitude!!)
-
-                        generateMyLocationMarker(googleMap, myCurrentLocation)
-
-                        // Updates the location and zoom of the MapView
-                        val cameraUpdate = CameraUpdateFactory.newLatLngZoom(myCurrentLocation, 16f)
-                        googleMap?.animateCamera(cameraUpdate)
-                    }
-                }
-            } else {
-                // if permissions are not currently granted, request permissions
-                EasyPermissions.requestPermissions(
-                    this,
-                    getString(R.string.permission_rationale_location),
-                    LOCATION_PERMISSION_REQUEST_CODE,
-                    *permissions
-                )
-            }
-        }
-    }
-
-    private fun generateMyLocationMarker(googleMap: GoogleMap?, location: LatLng) {
-        val circleOptions: CircleOptions = CircleOptions().apply {
-            center(location)
-            radius(15.0)
-            fillColor(0x32ff6600)
-            strokeWidth(0f)
-        }
-        googleMap?.addCircle(circleOptions)
-
-        val drawable = resources.getDrawable(R.drawable.shape_ring, null)
-        val icon = BitmapDescriptorFactory.fromBitmap(drawableToBitmap(drawable))
-
-        val markerOptions: MarkerOptions = MarkerOptions().apply {
-            icon(icon)
-            position(location)
-            anchor(0.5f, 0.5f)
-        }
-
-        googleMap?.addMarker(markerOptions)
+        // http://www.flickr.com/photos/usnationalarchives/4726892651/
+        clusterManager.addItem(Person("Teach", R.drawable.teacher, viewModel.position()))
     }
 
     override fun onResume() {
@@ -198,5 +146,4 @@ class MapFragment : Fragment() {
             return MapFragment()
         }
     }
-
 }
