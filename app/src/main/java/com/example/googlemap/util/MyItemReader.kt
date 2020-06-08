@@ -1,7 +1,7 @@
 package com.example.googlemap.util
 
 import com.example.googlemap.model.MyItem
-import com.google.android.gms.maps.model.LatLng
+import com.google.android.libraries.maps.model.LatLng
 import org.json.JSONArray
 import org.json.JSONException
 import java.io.InputStream

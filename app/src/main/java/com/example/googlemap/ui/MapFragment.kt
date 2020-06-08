@@ -11,9 +11,9 @@ import com.example.googlemap.databinding.FragmentMapBinding
 import com.example.googlemap.model.EventObserver
 import com.example.googlemap.model.Person
 import com.example.googlemap.model.PersonRenderer
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.MapView
-import com.google.android.gms.maps.model.LatLng
+import com.google.android.libraries.maps.CameraUpdateFactory
+import com.google.android.libraries.maps.MapView
+import com.google.android.libraries.maps.model.LatLng
 import com.google.maps.android.clustering.ClusterManager
 
 class MapFragment : Fragment() {
