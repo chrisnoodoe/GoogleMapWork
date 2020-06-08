@@ -7,9 +7,9 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import com.example.googlemap.R
 import com.example.googlemap.util.MultiDrawable
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.libraries.maps.GoogleMap
+import com.google.android.libraries.maps.model.BitmapDescriptorFactory
+import com.google.android.libraries.maps.model.MarkerOptions
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
@@ -22,17 +22,15 @@ import kotlin.math.min
  * When there are multiple people in the cluster, draw multiple photos (using MultiDrawable).
  */
 class PersonRenderer(
-    context: Context,
+    private val context: Context,
     googleMap: GoogleMap,
     clusterManager: ClusterManager<Person>?
-) :
-    DefaultClusterRenderer<Person>(context, googleMap, clusterManager) {
+) : DefaultClusterRenderer<Person>(context, googleMap, clusterManager) {
     private val mIconGenerator = IconGenerator(context)
     private val mClusterIconGenerator = IconGenerator(context)
     private val mImageView: ImageView
     private val mClusterImageView: ImageView
     private val mDimension: Int
-    private val context: Context = context
 
     init {
         val activity = context as Activity
@@ -48,12 +46,12 @@ class PersonRenderer(
         mIconGenerator.setContentView(mImageView)
     }
 
-    override fun onBeforeClusterItemRendered(person: Person?, markerOptions: MarkerOptions?) {
+    override fun onBeforeClusterItemRendered(person: Person, markerOptions: MarkerOptions) {
         // Draw a single person.
         // Set the info window to show their name.
-        mImageView.setImageResource(person!!.profilePhoto)
+        mImageView.setImageResource(person.profilePhoto)
         val icon = mIconGenerator.makeIcon()
-        markerOptions!!.icon(BitmapDescriptorFactory.fromBitmap(icon)).title(person.name)
+        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon)).title(person.name)
     }
 
     override fun onBeforeClusterRendered(cluster: Cluster<Person>, markerOptions: MarkerOptions) {
@@ -79,10 +77,10 @@ class PersonRenderer(
         markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon))
     }
 
-    override fun shouldRenderAsCluster(cluster: Cluster<Person>?): Boolean {
+    override fun shouldRenderAsCluster(cluster: Cluster<Person>): Boolean {
         // Always render clusters.
-        cluster?.let {
+        cluster.let {
             return it.size > 1
-        } ?: return false
+        }
     }
 }

@@ -22,7 +22,7 @@ import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.toBitmap
 import com.example.googlemap.R
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.libraries.maps.model.BitmapDescriptorFactory
 import com.google.maps.android.data.geojson.GeoJsonLayer
 import com.google.maps.android.data.geojson.GeoJsonPointStyle
 import com.google.maps.android.ui.IconGenerator

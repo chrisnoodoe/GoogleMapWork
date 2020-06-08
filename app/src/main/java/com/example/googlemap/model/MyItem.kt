@@ -1,6 +1,6 @@
 package com.example.googlemap.model
 
-import com.google.android.gms.maps.model.LatLng
+import com.google.android.libraries.maps.model.LatLng
 import com.google.maps.android.clustering.ClusterItem
 
 data class MyItem(
